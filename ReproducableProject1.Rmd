@@ -87,6 +87,7 @@ paste("Median Steps per Day =", median(total.steps, na.rm=FALSE))
 # the total number of steps per 5 minute interval using tapply.
 # We then calculate the mean number of steps for eachinterval.
 interval.steps <- tapply(activity$steps, activity$interval, sum, na.rm=TRUE)
+# calculate the mean number of steps for the given interval
 mean.steps <- tapply(activity$steps, activity$interval, mean, na.rm=TRUE)
 
 # 1. Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the
@@ -97,10 +98,10 @@ plot(unique(activity$interval), interval.steps, type="l",
 
 # 2. Which 5-minute interval, on average across all the days in the dataset, contains 
 #    the maximum number of steps?
-most <- which.max(interval.steps)
-abline(v=as.numeric(names(most)), col="black", lwd=2)
-paste("Five minute interval containg maxmum number of steps =", names(most))
-paste("Interval with max value =", activity$interval[which(mean.steps == max(mean.steps))])
+most <- activity$interval[which(mean.steps == max(mean.steps))]
+# create a vertical line indicating the interval
+abline(v=as.numeric(most), col="black", lwd=2)
+paste("Five minute interval containg maxmum number of steps =", most)
 paste("Maximum interval mean steps =", max(mean.steps))
 
 ```
@@ -123,7 +124,7 @@ paste("Total number of missing values in dataset =", sum(is.na(activity$steps)))
 
 ```
 
-The strategy Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
+Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
 
 ```{r}
 
@@ -131,23 +132,24 @@ The strategy Devise a strategy for filling in all of the missing values in the d
 ```
 ## Document Strategy
 --------------------------------
-To fill in the missing values, we utilize the mean for the given five-minute interval associated missing data.
+To fill in the missing values, we first identify all of the rows with missing data, the based on the interval associated with the missing data, we identify the corresponding mean for the five-minute interval and assign the value to the associated missing data. 
+
+Caveat: The interval mean is not recalculated, the assumption is that since we are using the mean value recalculation is unnecessary. 
 
 ```{r}
 # 3) Create a new dataset that is equal to the original dataset but with the missing data filled in.
 # Create a copy of the activity dataset
 activity.imputed <- activity
-# Replace the missing values, "NA", with the mean for that interval
+# Replace the missing values, "NA", with the mean for that five-minute interval
 naIndex <- is.na(activity.imputed$steps)
 activity.imputed$steps[naIndex] <- 
   mean.steps[as.character(activity.imputed$interval[naIndex])]
 
-#activity.imputed$steps <- with(activity.imputed, impute(steps, mean))
 # Show that there are no missing values remaining 
-paste("Total number of missing values in dataset =", sum(is.na(activity.imputed$steps)))
+paste("Total number of missing values in imputed dataset =", sum(is.na(activity.imputed$steps)))
 ```
 
-4) Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
+4) Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day.
 
 ```{r}
 #
@@ -158,7 +160,14 @@ plot(total.imputed.date, total.imputed.steps, type="h",
      main="Histogram of Daily Steps (Imputted NA Values)", 
      xlab="Date", ylab="Steps", col="grey", lwd=8)
 abline(h=mean(total.imputed.steps), col="red", lwd=2)
+```
 
+Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
+
+There appears to be a 15% differential between the calculated mean values for the missing and imputed data sets. There is a 3% differential in the calculated median values for the missing and imputed datasets.
+
+
+```{r}
 paste("Mean for daily steps =", mean(total.imputed.steps))
 paste("Median for daily steps =", median(total.imputed.steps))
 
@@ -175,7 +184,6 @@ Use the dataset with the filled-in missing values to determine if there is a dif
 ```{r}
 
 # For loop to create new column called "dayOfWeek" and insert whether each date corresponds to a weekday or weekend
-# activity.imputed$steps[is.nan(activity.imputed$steps)] <- 0
 df = data.frame(activity.imputed)
 # df$day = weekdays(df$date)
 
@@ -197,8 +205,4 @@ interval.plot <- ggplot(interval.week.steps,
 print(interval.plot)
 ```
 
-## Conclusions and Result Submission
---------------------------------
-
-The result on indicate that there is a difference in the level of activity between weekdays and weekends. While both subsets of data have high activity early in the day, weekdays show a significant spike over weekends for the earlier time intervals. Weekends indicate higher step count through the mid to later time intervals. Taking into account sleep periods, and typical work day.
-
+The result on indicate that there is a difference in the level of activity between weekdays and weekends. While both subsets of data have high activity early in the day, weekdays show a significant spike over weekends for the earlier time intervals. Weekends indicate higher step count through the mid to later time intervals. Taking into account sleep periods, and typical work day the results do not seem out of the ordinary.
