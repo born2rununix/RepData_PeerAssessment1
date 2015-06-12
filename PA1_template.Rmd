@@ -8,7 +8,32 @@ output: pdf_document
 # Loading and preprocessing the data
 
 ```{r}
-summary(cars)
+activityURL<-"https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
+
+if ( ! file.exists('repdata_data_activity.zip')) {
+  download.file(activityURL, 'repdata_data_activity.zip', method="curl")
+  unzip('repdata_data_activity.zip')
+} else {
+  if ( ! file.exists('activity.csv') )
+     unzip('repdata_data_activity.zip')
+}
+
+data <- read.csv('activity.csv')
+
+## Create a usable data time format for the intervals
+time <- formatC(data$interval / 100, 2, format='f')
+data$datetime <- as.POSIXct(paste(data$date, time),
+                                 format='%Y-%m-%d %H.%M',
+                                 tz='GMT')
+
+data$time <- format(data$datetime, format='%H:%M:%S')
+data$time <- as.POSIXct(data$time, format='%H:%M:%S')
+
+steps <- tapply(data$steps, data$date, sum, na.rm=TRUE)
+
+mean(steps)
+median(steps)
+
 ```
 
 
